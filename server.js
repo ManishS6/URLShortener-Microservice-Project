@@ -12,13 +12,28 @@ let Url;
 
 const Schema = mongoose.Schema;
 
-const urlSchema = new Schema({
+const newUrlSchema = new Schema({
   original_url : String,
-  short_url : Number
+  short_url : String
 });
 
-Url = mongoose.model('Url',urlSchema);
+Url = mongoose.model('Url',newUrlSchema);
 
+const form = (uri,identifier,done)=>{
+  var test = new Url({
+    complete_url: uri,
+    short_url: identifier
+  });
+  test.save((err,data)=>{
+    if(err) return console.error(err);
+    console.log(data);
+    res.json({
+      "complete_url":uri,
+      "short_url":identifier
+    })
+    // done(null,data);
+  });
+};
 var bodyParser = require('body-parser');
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -33,26 +48,59 @@ app.get('/', function(req, res) {
 
 // Your first API endpoint
 app.get('/api/hello', function(req, res) {
-  res.json({ greeting: 'hello API' });
+  res.json({ greeting: 'hello API'   
 });
+});
+
+// app.get('/api/shorturl/:id',(req,res)=>{
+//   let id = req.params.id;
+//   console.log(id);
+//   (id,done)=>{
+//     Url.findOne({short_url: id},
+//       (err,data)=>{
+//         console.log(data);
+//         if(err) return console.error(err);
+//         res.json({
+//           complete_url: data.complete_url,
+//           short_url: id
+//         });
+//         done(null,data);
+//       }
+//       )
+//   };
+// });
 
 app.use(bodyParser.urlencoded({extended:false}));
 
 app.post("/api/shorturl/new",(req,res)=>{
   let url_posted = req.body.url;
-  // console.log(url_posted);
+  // testing if the url had http:// or https://
+  if(/^https?:\/\//i.test(url_posted)==false){
+    return res.json({
+      "error": 'Invalid URL'
+    });
+  }
   let res1 = url_posted.replace(/^https?:\/\//i,'');
+  // using the dns lookup function to check if the url requested for is valid or not
   dns.lookup(res1,(err)=>{
-    console.log(err);
     if (err == null) {
-      res.redirect(url_posted);
+      var ID = function () {
+        return Math.random().toString(36).substr(2, 9);
+      };
+      var identifier = ID(1);
+      console.log(identifier);
+      // res.redirect(url_posted);
+      form(url_posted,identifier);
+      /*
+        Code to upload the complete_url and the short_url to MongoDB
+      */
     }
     else {
       res.json({
-        "error": 'invalid url'
+        "error": 'Invalid URL'
       });
     }
-  })
+  });
 });
 
 app.listen(port, function() {
