@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const dns = require('dns');
+const bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 mongoose.connect(process.env.MONGO_URI,{
   useUnifiedTopology:true,
@@ -19,22 +20,6 @@ const newUrlSchema = new Schema({
 
 Url = mongoose.model('Url',newUrlSchema);
 
-const form = (uri,identifier,done)=>{
-  var test = new Url({
-    complete_url: uri,
-    short_url: identifier
-  });
-  test.save((err,data)=>{
-    if(err) return console.error(err);
-    console.log(data);
-    res.json({
-      "complete_url":uri,
-      "short_url":identifier
-    })
-    // done(null,data);
-  });
-};
-var bodyParser = require('body-parser');
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -52,25 +37,20 @@ app.get('/api/hello', function(req, res) {
 });
 });
 
-// app.get('/api/shorturl/:id',(req,res)=>{
-//   let id = req.params.id;
-//   console.log(id);
-//   (id,done)=>{
-//     Url.findOne({short_url: id},
-//       (err,data)=>{
-//         console.log(data);
-//         if(err) return console.error(err);
-//         res.json({
-//           complete_url: data.complete_url,
-//           short_url: id
-//         });
-//         done(null,data);
-//       }
-//       )
-//   };
-// });
+app.get("/api/shorturl/:id",(req,res)=>{
+    let id = req.params.id;
+    // console.log(id);
+    Url.findOne({
+      short_url: id
+    },(err,data)=>{
+      if(err) return console.error(err);
+      res.redirect(data.original_url);
+    });
+});
 
 app.use(bodyParser.urlencoded({extended:false}));
+
+// The Following Code works fine !!!
 
 app.post("/api/shorturl/new",(req,res)=>{
   let url_posted = req.body.url;
@@ -90,10 +70,21 @@ app.post("/api/shorturl/new",(req,res)=>{
       var identifier = ID(1);
       console.log(identifier);
       // res.redirect(url_posted);
-      form(url_posted,identifier);
-      /*
-        Code to upload the complete_url and the short_url to MongoDB
-      */
+      var test = new Url({
+        original_url: url_posted,
+        short_url: identifier
+      });
+      test.save()
+          .then(item => {
+          res.send("item saved to database");
+          })
+          .catch(err => {
+          res.status(400).send("unable to save to database");
+          });
+      res.json({
+        original_url: url_posted,
+        short_url: identifier
+      })
     }
     else {
       res.json({
@@ -106,4 +97,3 @@ app.post("/api/shorturl/new",(req,res)=>{
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
-
