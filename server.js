@@ -48,6 +48,18 @@ app.get("/api/shorturl/:id",(req,res)=>{
     });
 });
 
+app.get("/api/test/:id",(req,res)=>{
+    let id = req.params.id;
+    // console.log(id);
+    Url.findOne({
+      short_url: id
+    },(err,data)=>{
+      if(err) return console.error(err);
+      console.log(data);
+      // res.redirect(data.original_url);
+    });
+});
+
 app.use(bodyParser.urlencoded({extended:false}));
 
 // The Following Code works fine !!!
@@ -69,22 +81,35 @@ app.post("/api/shorturl/new",(req,res)=>{
       };
       var identifier = ID(1);
       console.log(identifier);
-      // res.redirect(url_posted);
-      var test = new Url({
-        original_url: url_posted,
-        short_url: identifier
-      });
-      test.save()
-          .then(item => {
-          res.send("item saved to database");
+      
+      Url.findOne({
+        original_url: url_posted
+      },(err,data)=>{
+        if(err) return console.error(err);
+        if(data!=null){
+          console.log(data);
+          return res.json({
+            original_url: data.original_url,
+            short_url: data.short_url
           })
-          .catch(err => {
-          res.status(400).send("unable to save to database");
+        } else {
+          var test = new Url({
+            original_url: url_posted,
+            short_url: identifier
           });
-      res.json({
-        original_url: url_posted,
-        short_url: identifier
-      })
+          test.save()
+              .then(item => {
+              res.send("item saved to database");
+              })
+              .catch(err => {
+              res.status(400).send("unable to save to database");
+              });
+          res.json({
+            original_url: url_posted,
+            short_url: identifier
+          });
+        }
+      });
     }
     else {
       res.json({
