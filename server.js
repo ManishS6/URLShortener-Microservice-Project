@@ -80,7 +80,7 @@ app.post("/api/shorturl/new",(req,res)=>{
         return Math.random().toString(36).substr(2, 9);
       };
       var identifier = ID(1);
-      console.log(identifier);
+      // console.log(identifier);
       
       Url.findOne({
         original_url: url_posted
