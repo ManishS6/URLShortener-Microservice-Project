@@ -1,2 +1,1 @@
-# URLShortener-Microservice-Project
-This Repository contains the Solution for the URLShortener-Microservice-Project of API and Microservices Certification of freecodecamp.org
+# [URL Shortener Microservice](https://www.freecodecamp.org/learn/apis-and-microservices/apis-and-microservices-projects/url-shortener-microservice)
